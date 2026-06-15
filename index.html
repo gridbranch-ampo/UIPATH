@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Workfile Management System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0f2a4a;
+    --navy-mid: #1a3d6b;
+    --accent: #c8a94a;
+    --accent-light: #f0dfa0;
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #d1d9e6;
+    --text: #1a1a2e;
+    --text-sub: #5a6478;
+    --danger: #c0392b;
+    --success: #1a7a4a;
+    --row-hover: #eef2f9;
+    --selected-row: #dbe8ff;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    border-bottom: 3px solid var(--accent);
+  }
+  header .logo { font-size: 1.1rem; font-weight: 700; letter-spacing: .05em; }
+  header .logo span { color: var(--accent); }
+  header .system-label { font-size: .75rem; color: #aac; letter-spacing: .08em; text-transform: uppercase; }
+
+  /* ── MAIN CONTAINER ── */
+  .container { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* ── PAGE SECTIONS ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .card-title {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--navy-mid);
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+
+  /* ── PAGE TITLE ── */
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: .25rem;
+  }
+  .page-sub {
+    font-size: .85rem;
+    color: var(--text-sub);
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .78rem;
+    color: var(--text-sub);
+    margin-bottom: 1.5rem;
+  }
+  .breadcrumb span { color: var(--accent); font-weight: 600; }
+  .breadcrumb .sep { color: #bbb; }
+
+  /* ── STEP INDICATOR ── */
+  .steps {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: .5rem;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+  }
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    color: #888;
+    font-size: .75rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border);
+  }
+  .step.done .step-dot { background: var(--success); border-color: var(--success); color: #fff; }
+  .step.active .step-dot { background: var(--navy); border-color: var(--accent); color: #fff; }
+  .step-label { font-size: .6rem; color: var(--text-sub); margin-top: .3rem; text-align: center; }
+  .step.active .step-label { color: var(--navy); font-weight: 600; }
+  .step-line { flex: 1; height: 2px; background: var(--border); min-width: 24px; margin-bottom: 14px; }
+  .step-line.done { background: var(--success); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .55rem 1.3rem;
+    border-radius: 4px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: var(--navy-mid); }
+  .btn-accent { background: var(--accent); color: var(--navy); }
+  .btn-accent:hover { filter: brightness(.93); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { filter: brightness(.9); }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--navy);
+    color: var(--navy);
+  }
+  .btn-outline:hover { background: var(--navy); color: #fff; }
+  .btn-sm { padding: .35rem .85rem; font-size: .78rem; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; }
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: .3rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: .78rem; font-weight: 600; color: var(--navy-mid); }
+  input[type="text"], input[type="date"], input[type="time"], select, textarea {
+    padding: .5rem .75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    font-size: .85rem;
+    color: var(--text);
+    background: #fafbfc;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--navy);
+    background: #fff;
+  }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+  }
+  thead tr { background: var(--navy); color: #fff; }
+  thead th { padding: .65rem .85rem; text-align: left; font-weight: 600; font-size: .72rem; letter-spacing: .04em; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody tr.selected-workfile { background: var(--selected-row) !important; outline: 2px solid var(--navy-mid); outline-offset: -1px; }
+  tbody td { padding: .6rem .85rem; vertical-align: middle; }
+  tbody td:first-child { white-space: nowrap; }
+
+  /* ── CHECKBOX ── */
+  input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--navy);
+    cursor: pointer;
+  }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+    color: var(--text-sub);
+    font-size: .9rem;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: .15rem .55rem;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+  }
+  .badge-navy { background: var(--navy); color: #fff; }
+  .badge-accent { background: var(--accent-light); color: #7a6010; }
+  .badge-green { background: #d4edda; color: var(--success); }
+
+  /* ── ALERT ── */
+  .alert {
+    padding: .8rem 1rem;
+    border-radius: 4px;
+    font-size: .82rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+  }
+  .alert-warning { background: #fff8e1; border-left: 4px solid #f0ad4e; color: #7a5800; }
+  .alert-success { background: #eafaf1; border-left: 4px solid var(--success); color: #145a32; }
+  .alert-info { background: #e8f4fd; border-left: 4px solid #3498db; color: #1a4a6e; }
+  .alert .icon { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+
+  /* ── SUMMARY TABLE ── */
+  .summary-table th { background: var(--navy-mid); }
+  .summary-table tr.highlight td { background: #fff8e1; }
+
+  /* ── PHASE BAR ── */
+  .phase-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .phase-bar label { font-size: .78rem; font-weight: 600; color: var(--navy-mid); white-space: nowrap; }
+  .phase-bar select { max-width: 220px; }
+
+  /* ── WORKFILE SELECTOR ── */
+  .wf-selector { cursor: pointer; }
+  .wf-selector td { font-size: .82rem; }
+
+  /* ── CONFIRM BOX ── */
+  .confirm-box {
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.5rem;
+    background: #fffdf0;
+    text-align: center;
+  }
+  .confirm-box h3 { color: var(--navy); margin-bottom: .5rem; }
+  .confirm-box p { color: var(--text-sub); font-size: .85rem; margin-bottom: 1.2rem; }
+
+  /* ── DETAIL LIST ── */
+  .detail-grid { display: grid; grid-template-columns: 180px 1fr; gap: .4rem .75rem; font-size: .83rem; }
+  .detail-grid .dl { color: var(--text-sub); font-weight: 600; }
+  .detail-grid .dv { color: var(--text); }
+
+  /* ── MISC ── */
+  .row-actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+  .text-right { text-align: right; }
+  .mt-1 { margin-top: .5rem; }
+  .mt-2 { margin-top: 1rem; }
+  .mt-3 { margin-top: 1.5rem; }
+  .mb-1 { margin-bottom: .5rem; }
+  .mb-2 { margin-bottom: 1rem; }
+  .gap-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+  .count-badge { background: var(--navy); color: #fff; font-size: .72rem; font-weight: 700; border-radius: 20px; padding: .1rem .55rem; }
+
+  /* ── MODAL ── */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    padding: 1.5rem;
+    max-width: 480px;
+    width: 90%;
+    border-top: 4px solid var(--accent);
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  }
+  .modal h3 { color: var(--navy); margin-bottom: .5rem; font-size: 1rem; }
+  .modal p { font-size: .85rem; color: var(--text-sub); line-height: 1.6; }
+  .modal-log { background: #f4f6f9; border: 1px solid var(--border); border-radius: 4px; padding: .75rem; font-size: .78rem; font-family: monospace; max-height: 150px; overflow-y: auto; margin: .75rem 0; color: #333; }
+  .modal-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.cols-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">NS<span>MAN</span> WORKFILE SYSTEM</div>
+    <div class="system-label">Call-Up Management Portal</div>
+  </div>
+  <div style="font-size:.78rem;color:#aac;">Logged in: ADM_USER &nbsp;|&nbsp; SAF</div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     PAGE 0 — LANDING
+═══════════════════════════════════════════ -->
+<div class="page active" id="page-landing">
+  <div class="container">
+    <div class="card" style="text-align:center;padding:3rem 2rem;">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">📋</div>
+      <h1 class="page-title" style="text-align:center;margin-bottom:.5rem;">Workfile Management</h1>
+      <p class="page-sub" style="text-align:center;">Manage NSmen call-up workfiles, assign phases, and generate broadcast records.</p>
+      <div style="margin-top:2rem;">
+        <button class="btn btn-primary" id="btn-create-workfile" onclick="goTo('page-create-form')">
+          ➕ Create Workfile
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 1 — CREATE WORKFILE FORM
+═══════════════════════════════════════════ -->
+<div class="page" id="page-create-form">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> <span>Create Workfile</span></div>
+    <div class="page-title">Create Workfile</div>
+    <p class="page-sub">Fill in the details below to create a new workfile request.</p>
+
+    <div class="card">
+      <div class="card-title">Workfile Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Activity Code Name *</label>
+          <select id="f-activity-code">
+            <option value="">-- Select --</option>
+            <option>BRIEFING/SEMINAR</option>
+            <option>COURSES (HIGH KEY)</option>
+            <option>FLEXI-ICT</option>
+            <option>EXERCISE</option>
+            <option>OVERSEAS EXERCISE</option>
+            <option>IPPT/RT</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Activity Type *</label>
+          <select id="f-activity-type">
+            <option value="">-- Select --</option>
+            <option>Briefing</option>
+            <option>Basic/ Vocation Course</option>
+            <option>Flexi-ICT</option>
+            <option>Exercise</option>
+            <option>IPPT</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Conducting Unit *</label>
+          <select id="f-unit">
+            <option value="">-- Select --</option>
+            <option>100 SQN</option>
+            <option>101 SQN</option>
+            <option>102 SQN</option>
+            <option>103 SQN</option>
+            <option>HQ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Activity Name *</label>
+          <input type="text" id="f-activity-name" placeholder="e.g. Annual Refresher Training 2026" />
+        </div>
+        <div class="form-group">
+          <label>Start Date *</label>
+          <input type="date" id="f-start-date" />
+        </div>
+        <div class="form-group">
+          <label>End Date *</label>
+          <input type="date" id="f-end-date" />
+        </div>
+        <div class="form-group">
+          <label>Start Time *</label>
+          <input type="time" id="f-start-time" />
+        </div>
+        <div class="form-group">
+          <label>End Time *</label>
+          <input type="time" id="f-end-time" />
+        </div>
+        <div class="form-group full">
+          <label>Overall Commanding Officer *</label>
+          <input type="text" id="f-co" placeholder="Full name (same as eDefer)" />
+        </div>
+        <div class="form-group">
+          <label>Reporting Location *</label>
+          <input type="text" id="f-location" placeholder="e.g. Mistwood Hollow" />
+        </div>
+        <div class="form-group">
+          <label>Reporting Attire *</label>
+          <select id="f-attire">
+            <option value="">-- Select --</option>
+            <option>No 1 Uniform without Sword</option>
+            <option>No 3 Dress with Head Dress and PT Attire</option>
+            <option>No 4 Dress (Field)</option>
+            <option>PT Kit</option>
+            <option>Mufti</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-submit-workfile" onclick="submitWorkfile()">➕ Create Workfile</button>
+        <button class="btn btn-outline" onclick="goTo('page-landing')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 2 — ELIGIBLE LIST
+═══════════════════════════════════════════ -->
+<div class="page" id="page-eligible">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> Create Workfile <span class="sep">›</span> <span>Eligible List</span></div>
+    <div class="flex-between mb-2">
+      <div>
+        <div class="page-title">Eligible List</div>
+        <p class="page-sub">Select personnel to include in the call-up. First select a Workfile, then check individual NSmen.</p>
+      </div>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="steps" id="steps-eligible">
+      <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">Select Workfile</div></div>
+      <div class="step-line" id="line1"></div>
+      <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">Select NSmen</div></div>
+      <div class="step-line" id="line2"></div>
+      <div class="step" id="step3"><div class="step-dot">3</div><div class="step-label">Assign Phase</div></div>
+    </div>
+
+    <!-- Workfile Request Table -->
+    <div class="card">
+      <div class="card-title">Workfile Request — Select a Workfile</div>
+      <div class="table-wrap">
+        <table id="workfile-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Activity Code Name</th>
+              <th>Activity Type</th>
+              <th>Conducting Unit</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Activity Name</th>
+              <th>Overall CO</th>
+              <th>Reporting Location</th>
+              <th>Reporting Attire</th>
+            </tr>
+          </thead>
+          <tbody id="workfile-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Eligible Personnel Table -->
+    <div class="card" id="eligible-card">
+      <div class="flex-between mb-2">
+        <div>
+          <div class="card-title">Eligible Personnel</div>
+          <div id="eligible-meta" style="font-size:.8rem;color:var(--text-sub);margin-top:.25rem;"></div>
+        </div>
+        <div id="sel-count-wrap" style="display:none;">
+          <span style="font-size:.82rem;color:var(--text-sub);">Selected: </span>
+          <span class="count-badge" id="sel-count">0</span>
+        </div>
+      </div>
+
+      <div id="alert-missing" class="alert alert-warning" style="display:none;">
+        <span class="icon">⚠️</span>
+        <div id="alert-missing-text"></div>
+      </div>
+
+      <div class="loading-overlay" id="eligible-loading">
+        <div class="spinner"></div>
+        <div>Querying personnel database… This may take a moment.</div>
+      </div>
+
+      <div id="eligible-table-wrap" style="display:none;">
+        <div style="font-size:.78rem;color:var(--text-sub);margin-bottom:.5rem;">
+          ℹ️ Check the boxes on the left to select NSmen for call-up.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px;"><input type="checkbox" id="chk-all" onclick="toggleAll(this)" /></th>
+                <th>Rank &amp; Name</th>
+                <th>NRIC</th>
+                <th>Pers No</th>
+                <th>PES</th>
+                <th>TOS</th>
+                <th>ORNs Years</th>
+                <th>Vocation</th>
+                <th>Trg Position Description</th>
+              </tr>
+            </thead>
+            <tbody id="eligible-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="eligible-placeholder" style="padding:2rem;text-align:center;color:var(--text-sub);font-size:.85rem;">
+        ← Select a Workfile above to load eligible personnel.
+      </div>
+    </div>
+
+    <!-- Phase + Actions -->
+    <div id="phase-bar-wrap" style="display:none;">
+      <div class="phase-bar">
+        <label>ASSIGN PHASE:</label>
+        <select id="phase-select">
+          <option value="">-- Select Phase --</option>
+          <option value="DEFAULT PHASE" id="opt-default-phase">DEFAULT PHASE</option>
+          <option value="PHASE 1">PHASE 1</option>
+          <option value="PHASE 2">PHASE 2</option>
+          <option value="PHASE 3">PHASE 3</option>
+        </select>
+        <button class="btn btn-accent btn-sm" onclick="assignPhase()">Assign Phase</button>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-add-callup" onclick="addToCallUp()" disabled>
+          📤 Add to Call-Up NR
+        </button>
+        <button class="btn btn-outline" onclick="goTo('page-create-form')">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 3 — CALL-UP PERSONNEL REVIEW
+═══════════════════════════════════════════ -->
+<div class="page" id="page-review">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> Eligible List <span class="sep">›</span> <span>Call-Up Review</span></div>
+    <div class="page-title">Call-Up Personnel Review</div>
+    <p class="page-sub">Review the personnel added to this call-up before confirming.</p>
+
+    <div class="card">
+      <div class="card-title">Workfile Summary</div>
+      <div class="detail-grid" id="review-workfile-info"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Selected Personnel</div>
+      <div class="table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Rank &amp; Name</th>
+              <th>NRIC</th>
+              <th>Pers No</th>
+              <th>PES</th>
+              <th>TOS</th>
+              <th>ORNs Years</th>
+              <th>Vocation</th>
+              <th>Trg Position Description</th>
+              <th>Phase</th>
+            </tr>
+          </thead>
+          <tbody id="review-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="confirm-box mt-3">
+      <h3>Confirm Call-Up?</h3>
+      <p>By clicking Confirm, the selected personnel will be formally added to this Call-Up NR. This action cannot be undone without supervisor approval.</p>
+      <div class="gap-row" style="justify-content:center;">
+        <button class="btn btn-success" id="btn-confirm" onclick="confirmCallUp()">✔ Confirm</button>
+        <button class="btn btn-outline" onclick="goTo('page-eligible')">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 4 — SUMMARY
+═══════════════════════════════════════════ -->
+<div class="page" id="page-summary">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> Review <span class="sep">›</span> <span>Summary</span></div>
+    <div class="page-title">Call-Up Summary</div>
+    <p class="page-sub">Call-up confirmed. Review the summary below before broadcasting.</p>
+
+    <div class="alert alert-success">
+      <span class="icon">✅</span>
+      <div>Call-Up NR has been successfully generated. Reference No: <strong id="callup-ref"></strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Workfile Reference</div>
+      <div class="detail-grid" id="summary-workfile-info"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Personnel Count by Phase</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phase</th><th>Count</th><th>Status</th></tr></thead>
+          <tbody id="summary-phase-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">NSmen Summary</div>
+      <div class="table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>#</th><th>Rank &amp; Name</th><th>NRIC</th><th>Pers No</th><th>Phase</th><th>Status</th></tr>
+          </thead>
+          <tbody id="summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row-actions mt-2">
+      <button class="btn btn-primary" id="btn-review-broadcast" onclick="goTo('page-detailed-summary')">
+        📡 Review for Broadcast
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 5 — DETAILED SUMMARY
+═══════════════════════════════════════════ -->
+<div class="page" id="page-detailed-summary">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> Summary <span class="sep">›</span> <span>Detailed Summary</span></div>
+    <div class="page-title">Detailed Call-Up Summary</div>
+    <p class="page-sub">Full details of the call-up package for broadcast verification.</p>
+
+    <div class="card">
+      <div class="card-title">Activity Information</div>
+      <div class="detail-grid" id="detailed-activity-info"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Personnel Details</div>
+      <div class="table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>#</th><th>Rank &amp; Name</th><th>NRIC</th><th>Pers No</th><th>PES</th><th>TOS</th><th>ORNs Years</th><th>Vocation</th><th>Trg Position Description</th><th>Phase</th><th>NSman Match</th></tr>
+          </thead>
+          <tbody id="detailed-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row-actions mt-2">
+      <button class="btn btn-primary" onclick="goTo('page-super-summary')">🔍 View Super Detailed Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 6 — SUPER DETAILED SUMMARY
+═══════════════════════════════════════════ -->
+<div class="page" id="page-super-summary">
+  <div class="container">
+    <div class="breadcrumb">Home <span class="sep">›</span> Detailed Summary <span class="sep">›</span> <span>Super Detailed Summary</span></div>
+    <div class="page-title">Super Detailed Summary</div>
+    <p class="page-sub">Complete audit trail and broadcast-ready package for this Workfile Call-Up NR.</p>
+
+    <div class="alert alert-info">
+      <span class="icon">ℹ️</span>
+      <div>This record is now locked for broadcast. Any amendments require supervisor override. <strong>Reference: <span id="super-ref"></span></strong></div>
+    </div>
+
+    <div id="super-cards"></div>
+
+    <div class="card" style="border-top:3px solid var(--success);">
+      <div class="card-title">Broadcast Checklist</div>
+      <table>
+        <thead><tr><th>Item</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Workfile Details Verified</td><td><span class="badge badge-green">✔ Done</span></td></tr>
+          <tr><td>CO Acknowledged</td><td><span class="badge badge-green">✔ Done</span></td></tr>
+          <tr><td>Personnel List Confirmed</td><td><span class="badge badge-green">✔ Done</span></td></tr>
+          <tr><td>Phase Assigned</td><td><span class="badge badge-green">✔ Done</span></td></tr>
+          <tr><td>Call-Up NR Generated</td><td><span class="badge badge-green">✔ Done</span></td></tr>
+          <tr><td>Ready for Broadcast</td><td><span class="badge badge-green">✔ READY</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row-actions mt-2">
+      <button class="btn btn-success" onclick="alert('📡 Broadcast initiated successfully! NSmen will be notified via NS Portal.')">📡 Broadcast Now</button>
+      <button class="btn btn-outline" onclick="goTo('page-landing')">🏠 Return to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MISSING PERSONNEL MODAL ── -->
+<div class="modal-backdrop" id="modal-missing">
+  <div class="modal">
+    <h3>⚠️ Missing Personnel Detected</h3>
+    <p>The following NSmen were listed in the Workfile but could not be found in the Eligible List. The RPA will continue processing the remaining personnel.</p>
+    <div class="modal-log" id="modal-missing-log"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-sm" onclick="closeMissingModal()">Acknowledge &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const WORKFILE_REQUESTS = [
+  { id:1, activityCode:'BRIEFING/SEMINAR', activityType:'Briefing', unit:'102 SQN', startDate:'11/6/2026', endDate:'11/6/2026', startTime:'6:00 AM', endTime:'7:59 PM', activityName:'Test', co:'Julian Thorne', location:'Mistwood Hollow', attire:'No 3 Dress with Head Dress and PT Attire' },
+  { id:2, activityCode:'COURSES (HIGH KEY)', activityType:'Basic/ Vocation Course', unit:'100 SQN', startDate:'11/6/2026', endDate:'18/6/2026', startTime:'4:00 AM', endTime:'7:59 PM', activityName:'Test', co:'Marcus Sterling', location:'Golden Plateau', attire:'No 3 Dress with Head Dress and PT Attire' },
+  { id:3, activityCode:'FLEXI-ICT', activityType:'Flexi-ICT', unit:'102 SQN', startDate:'18/6/2026', endDate:'18/6/2026', startTime:'6:30 PM', endTime:'2:44 AM', activityName:'Test', co:'Jasper Knight', location:'Marble Port', attire:'No 1 Uniform without Sword' },
+];
+
+// NSmen_Workfile table — maps Workfile Request ID → NRICs
+const NSMEN_WORKFILE = [
+  { id:1, workfileReqId:1, nric:'S123', name:'ASD' },
+  { id:2, workfileReqId:2, nric:'ASD',  name:'FAS' },
+  { id:3, workfileReqId:3, nric:'ASDF', name:'ASFSD' },
+  { id:4, workfileReqId:3, nric:'ASDCAS', name:'ASVZXCZX' },
+];
+
+// Eligible List (larger pool; includes NSmen_Workfile NRICs + extras)
+const ELIGIBLE_LIST = [
+  { rank:'CPL', name:'NATHAN REED',       nric:'S1234567A', persNo:'P001', pes:'B1', tos:'NSF', orns:'2', vocation:'INF',  trgPos:'Section Commander' },
+  { rank:'SGT', name:'ETHAN BROOKS',      nric:'S2345678B', persNo:'P002', pes:'A',  tos:'NS(R)', orns:'5', vocation:'ARTY','trgPos':'Gun Detachment Commander' },
+  { rank:'3SG', name:'SAMUEL HAYES',      nric:'S3456789C', persNo:'P003', pes:'B2', tos:'NS(R)', orns:'3', vocation:'ENGR','trgPos':'Combat Engineer' },
+  { rank:'CPL', name:'ASD',               nric:'S123',      persNo:'P004', pes:'A',  tos:'NS(R)', orns:'4', vocation:'SIG', trgPos:'Signal Operator' },
+  { rank:'2LT', name:'LUCAS MORGAN',      nric:'S5678901E', persNo:'P005', pes:'A',  tos:'NS(R)', orns:'6', vocation:'INF', trgPos:'Platoon Commander' },
+  { rank:'CPL', name:'FAS',               nric:'ASD',       persNo:'P006', pes:'B1', tos:'NS(R)', orns:'2', vocation:'ARTY','trgPos:'Artillery Operator' },
+  { rank:'3SG', name:'ASFSD',             nric:'ASDF',      persNo:'P007', pes:'B2', tos:'NS(R)', orns:'3', vocation:'ENGR','trgPos':'Sapper' },
+  { rank:'CPL', name:'ASVZXCZX',          nric:'ASDCAS',    persNo:'P008', pes:'A',  tos:'NSF',   orns:'1', vocation:'MP',  trgPos:'Military Policeman' },
+  { rank:'LCP', name:'JAMES WHITFIELD',   nric:'S9012345I', persNo:'P009', pes:'C2', tos:'NS(R)', orns:'4', vocation:'LOG', trgPos:'Driver' },
+  { rank:'SGT', name:'BENJAMIN CARTER',   nric:'S0123456J', persNo:'P010', pes:'A',  tos:'NS(R)', orns:'7', vocation:'INF', trgPos:'Section 2IC' },
+  { rank:'2LT', name:'NICHOLAS PRICE',    nric:'S1122334K', persNo:'P011', pes:'A',  tos:'NS(R)', orns:'5', vocation:'ARMD','trgPos':'Tank Commander' },
+  { rank:'CPL', name:'DANIEL FOSTER',     nric:'S2233445L', persNo:'P012', pes:'B1', tos:'NS(R)', orns:'2', vocation:'SIG', trgPos:'Radio Operator' },
+  { rank:'LCP', name:'RYAN COLLINS',      nric:'S3344556M', persNo:'P013', pes:'B2', tos:'NS(R)', orns:'3', vocation:'MED', trgPos:'Combat Medic' },
+  { rank:'CPT', name:'ALEX TURNER',       nric:'S4455667N', persNo:'P014', pes:'A',  tos:'NS(R)', orns:'9', vocation:'INF', trgPos:'Company Commander' },
+  { rank:'WO2', name:'DEREK CHAN',        nric:'S5566778O', persNo:'P015', pes:'A',  tos:'NS(R)', orns:'12','vocation':'INF','trgPos':'Regimental Sergeant Major' },
+  { rank:'3SG', name:'MARCUS LIEW',       nric:'S6677889P', persNo:'P016', pes:'B2', tos:'NS(R)', orns:'3', vocation:'ENGR','trgPos':'Combat Engineer' },
+  { rank:'CPL', name:'JOHN TAN',          nric:'S7788990Q', persNo:'P017', pes:'A',  tos:'NSF',   orns:'1', vocation:'INF', trgPos:'Rifleman' },
+  { rank:'LCP', name:'KEVIN NG',          nric:'S8899001R', persNo:'P018', pes:'C1', tos:'NS(R)', orns:'5', vocation:'LOG', trgPos:'Storeman' },
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state = {
+  selectedWorkfileId: null,
+  selectedPhase: null,
+  phaseAssigned: false,
+  selectedNrics: [],
+  selectedPersonnel: [],
+  callupRef: null,
+  addedWorkfiles: [...WORKFILE_REQUESTS],
+};
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+function goTo(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0,0);
+  if (pageId === 'page-eligible')  initEligiblePage();
+  if (pageId === 'page-review')    initReviewPage();
+  if (pageId === 'page-summary')   initSummaryPage();
+  if (pageId === 'page-detailed-summary') initDetailedPage();
+  if (pageId === 'page-super-summary') initSuperPage();
+}
+
+// ═══════════════════════════════════════════
+// PAGE 1 — SUBMIT WORKFILE
+// ═══════════════════════════════════════════
+function submitWorkfile() {
+  const v = id => document.getElementById(id).value.trim();
+  const fields = ['f-activity-code','f-activity-type','f-unit','f-activity-name',
+                  'f-start-date','f-end-date','f-start-time','f-end-time','f-co','f-location','f-attire'];
+  if (fields.some(f => !v(f))) { alert('Please fill in all required fields.'); return; }
+
+  const fmt = d => { const [y,m,dy] = d.split('-'); return `${dy}/${m}/${y}`; };
+  const fmtT = t => {
+    const [h,m] = t.split(':'); const hh = parseInt(h);
+    return `${hh>12?hh-12:hh||12}:${m} ${hh>=12?'PM':'AM'}`;
+  };
+
+  const newWf = {
+    id: state.addedWorkfiles.length + 1,
+    activityCode: v('f-activity-code'), activityType: v('f-activity-type'),
+    unit: v('f-unit'), startDate: fmt(v('f-start-date')), endDate: fmt(v('f-end-date')),
+    startTime: fmtT(v('f-start-time')), endTime: fmtT(v('f-end-time')),
+    activityName: v('f-activity-name'), co: v('f-co'),
+    location: v('f-location'), attire: v('f-attire'),
+  };
+  state.addedWorkfiles.push(newWf);
+  goTo('page-eligible');
+}
+
+// ═══════════════════════════════════════════
+// PAGE 2 — ELIGIBLE LIST
+// ═══════════════════════════════════════════
+function initEligiblePage() {
+  state.selectedWorkfileId = null;
+  state.selectedPhase = null;
+  state.phaseAssigned = false;
+  state.selectedNrics = [];
+
+  renderWorkfileTable();
+  document.getElementById('eligible-placeholder').style.display = 'block';
+  document.getElementById('eligible-loading').classList.remove('show');
+  document.getElementById('eligible-table-wrap').style.display = 'none';
+  document.getElementById('alert-missing').style.display = 'none';
+  document.getElementById('phase-bar-wrap').style.display = 'none';
+  document.getElementById('sel-count-wrap').style.display = 'none';
+  document.getElementById('btn-add-callup').disabled = true;
+  document.getElementById('eligible-meta').textContent = '';
+  setStep(1);
+}
+
+function renderWorkfileTable() {
+  const tbody = document.getElementById('workfile-tbody');
+  tbody.innerHTML = state.addedWorkfiles.map(w => `
+    <tr class="wf-selector" id="wf-row-${w.id}" onclick="selectWorkfile(${w.id})">
+      <td>${w.id}</td>
+      <td><span class="badge badge-navy">${w.activityCode}</span></td>
+      <td>${w.activityType}</td>
+      <td>${w.unit}</td>
+      <td>${w.startDate}</td>
+      <td>${w.endDate}</td>
+      <td>${w.startTime}</td>
+      <td>${w.endTime}</td>
+      <td>${w.activityName}</td>
+      <td>${w.co}</td>
+      <td>${w.location}</td>
+      <td>${w.attire}</td>
+    </tr>`).join('');
+}
+
+function selectWorkfile(id) {
+  state.selectedWorkfileId = id;
+  document.querySelectorAll('#workfile-tbody tr').forEach(r => r.classList.remove('selected-workfile'));
+  document.getElementById('wf-row-'+id).classList.add('selected-workfile');
+
+  // show loading
+  document.getElementById('eligible-placeholder').style.display = 'none';
+  document.getElementById('eligible-table-wrap').style.display = 'none';
+  document.getElementById('alert-missing').style.display = 'none';
+  document.getElementById('eligible-loading').classList.add('show');
+  document.getElementById('sel-count-wrap').style.display = 'none';
+  setStep(2);
+
+  setTimeout(() => loadEligibleList(id), 2500);
+}
+
+function loadEligibleList(workfileId) {
+  document.getElementById('eligible-loading').classList.remove('show');
+
+  const wfNsmen = NSMEN_WORKFILE.filter(n => n.workfileReqId === workfileId);
+  const wfNrics = wfNsmen.map(n => n.nric);
+  const eligibleNrics = ELIGIBLE_LIST.map(e => e.nric);
+
+  // Check missing
+  const missing = wfNrics.filter(n => !eligibleNrics.includes(n));
+  if (missing.length) {
+    const log = missing.map(n => {
+      const m = wfNsmen.find(x=>x.nric===n);
+      return `[WARNING] NRIC ${n} (${m?m.name:'Unknown'}) not found in Eligible List — skipped.`;
+    }).join('\n');
+    document.getElementById('modal-missing-log').textContent = log;
+    document.getElementById('modal-missing').classList.add('show');
+  }
+
+  // Render full eligible list; highlight matched
+  const matched = wfNrics.filter(n => eligibleNrics.includes(n));
+  const tbody = document.getElementById('eligible-tbody');
+  tbody.innerHTML = ELIGIBLE_LIST.map((p,i) => {
+    const isMatch = wfNrics.includes(p.nric);
+    return `<tr id="erow-${i}" style="${isMatch?'background:#e8f8ee;':''}">
+      <td><input type="checkbox" class="elig-chk" data-nric="${p.nric}" data-idx="${i}" onchange="updateSelCount()" ${isMatch?'checked':''} /></td>
+      <td>${p.rank} ${p.name} ${isMatch?'<span class="badge badge-green" style="font-size:.62rem;">WF</span>':''}</td>
+      <td>${p.nric}</td><td>${p.persNo}</td><td>${p.pes}</td>
+      <td>${p.tos}</td><td>${p.orns}</td><td>${p.vocation}</td><td>${p.trgPos}</td>
+    </tr>`;
+  }).join('');
+
+  const wf = state.addedWorkfiles.find(w=>w.id===workfileId);
+  document.getElementById('eligible-meta').textContent =
+    `Workfile #${workfileId} — ${wf.activityName} | ${wf.unit} | ${wf.startDate}–${wf.endDate}`;
+
+  document.getElementById('eligible-table-wrap').style.display = 'block';
+  document.getElementById('phase-bar-wrap').style.display = 'block';
+  document.getElementById('sel-count-wrap').style.display = 'block';
+  updateSelCount();
+}
+
+function closeMissingModal() {
+  document.getElementById('modal-missing').classList.remove('show');
+}
+
+function toggleAll(chk) {
+  document.querySelectorAll('.elig-chk').forEach(c => c.checked = chk.checked);
+  updateSelCount();
+}
+
+function updateSelCount() {
+  const checked = document.querySelectorAll('.elig-chk:checked');
+  document.getElementById('sel-count').textContent = checked.length;
+  document.getElementById('btn-add-callup').disabled = !(checked.length > 0 && state.phaseAssigned);
+}
+
+function assignPhase() {
+  const ph = document.getElementById('phase-select').value;
+  if (!ph) { alert('Please select a phase before assigning.'); return; }
+  state.selectedPhase = ph;
+  state.phaseAssigned = true;
+  setStep(3);
+  updateSelCount();
+  alert(`✔ Phase "${ph}" assigned to selected personnel.`);
+}
+
+function addToCallUp() {
+  const checked = [...document.querySelectorAll('.elig-chk:checked')];
+  state.selectedNrics = checked.map(c => c.dataset.nric);
+  state.selectedPersonnel = state.selectedNrics.map(nric => ELIGIBLE_LIST.find(e => e.nric === nric)).filter(Boolean);
+  state.callupRef = 'NR-' + Date.now().toString().slice(-6);
+  goTo('page-review');
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).className = 'step' + (i<n?' done':i===n?' active':'');
+  });
+  [1,2].forEach(i => {
+    const el = document.getElementById('line'+i);
+    if(el) el.className = 'step-line' + (i<n?' done':'');
+  });
+}
+
+// ═══════════════════════════════════════════
+// PAGE 3 — REVIEW
+// ═══════════════════════════════════════════
+function initReviewPage() {
+  const wf = state.addedWorkfiles.find(w => w.id === state.selectedWorkfileId);
+  document.getElementById('review-workfile-info').innerHTML = wfDetailHtml(wf);
+  const tbody = document.getElementById('review-tbody');
+  tbody.innerHTML = state.selectedPersonnel.map((p,i) => `
+    <tr>
+      <td>${i+1}</td><td>${p.rank} ${p.name}</td><td>${p.nric}</td>
+      <td>${p.persNo}</td><td>${p.pes}</td><td>${p.tos}</td><td>${p.orns}</td>
+      <td>${p.vocation}</td><td>${p.trgPos}</td>
+      <td><span class="badge badge-accent">${state.selectedPhase}</span></td>
+    </tr>`).join('');
+}
+
+function confirmCallUp() {
+  goTo('page-summary');
+}
+
+// ═══════════════════════════════════════════
+// PAGE 4 — SUMMARY
+// ═══════════════════════════════════════════
+function initSummaryPage() {
+  document.getElementById('callup-ref').textContent = state.callupRef;
+  const wf = state.addedWorkfiles.find(w => w.id === state.selectedWorkfileId);
+  document.getElementById('summary-workfile-info').innerHTML = wfDetailHtml(wf);
+
+  document.getElementById('summary-phase-tbody').innerHTML = `
+    <tr><td>${state.selectedPhase}</td><td>${state.selectedPersonnel.length}</td>
+    <td><span class="badge badge-green">Confirmed</span></td></tr>`;
+
+  document.getElementById('summary-tbody').innerHTML = state.selectedPersonnel.map((p,i) => `
+    <tr>
+      <td>${i+1}</td><td>${p.rank} ${p.name}</td><td>${p.nric}</td>
+      <td>${p.persNo}</td>
+      <td><span class="badge badge-accent">${state.selectedPhase}</span></td>
+      <td><span class="badge badge-green">Added</span></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// PAGE 5 — DETAILED SUMMARY
+// ═══════════════════════════════════════════
+function initDetailedPage() {
+  const wf = state.addedWorkfiles.find(w => w.id === state.selectedWorkfileId);
+  document.getElementById('detailed-activity-info').innerHTML = wfDetailHtml(wf);
+
+  const wfNrics = NSMEN_WORKFILE.filter(n=>n.workfileReqId===state.selectedWorkfileId).map(n=>n.nric);
+
+  document.getElementById('detailed-tbody').innerHTML = state.selectedPersonnel.map((p,i) => {
+    const isWfMatch = wfNrics.includes(p.nric);
+    return `<tr class="${isWfMatch?'highlight':''}">
+      <td>${i+1}</td><td>${p.rank} ${p.name}</td><td>${p.nric}</td>
+      <td>${p.persNo}</td><td>${p.pes}</td><td>${p.tos}</td><td>${p.orns}</td>
+      <td>${p.vocation}</td><td>${p.trgPos}</td>
+      <td><span class="badge badge-accent">${state.selectedPhase}</span></td>
+      <td>${isWfMatch?'<span class="badge badge-green">✔ Matched</span>':'<span class="badge badge-navy">Additional</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// PAGE 6 — SUPER DETAILED SUMMARY
+// ═══════════════════════════════════════════
+function initSuperPage() {
+  document.getElementById('super-ref').textContent = state.callupRef;
+  const wf = state.addedWorkfiles.find(w => w.id === state.selectedWorkfileId);
+
+  const wfNrics = NSMEN_WORKFILE.filter(n=>n.workfileReqId===state.selectedWorkfileId).map(n=>n.nric);
+
+  document.getElementById('super-cards').innerHTML = state.selectedPersonnel.map((p,i) => {
+    const isWfMatch = wfNrics.includes(p.nric);
+    return `<div class="card" style="border-left:4px solid ${isWfMatch?'var(--success)':'var(--accent)'};">
+      <div class="flex-between mb-1">
+        <div style="font-weight:700;color:var(--navy);">${p.rank} ${p.name}</div>
+        <div>${isWfMatch?'<span class="badge badge-green">WF Match</span>':'<span class="badge badge-accent">Additional</span>'}
+          <span class="badge badge-navy" style="margin-left:.3rem;">${state.selectedPhase}</span></div>
+      </div>
+      <div class="detail-grid">
+        <div class="dl">NRIC</div><div class="dv">${p.nric}</div>
+        <div class="dl">Pers No</div><div class="dv">${p.persNo}</div>
+        <div class="dl">PES</div><div class="dv">${p.pes}</div>
+        <div class="dl">TOS</div><div class="dv">${p.tos}</div>
+        <div class="dl">ORNs Years</div><div class="dv">${p.orns}</div>
+        <div class="dl">Vocation</div><div class="dv">${p.vocation}</div>
+        <div class="dl">Trg Position</div><div class="dv">${p.trgPos}</div>
+        <div class="dl">Activity</div><div class="dv">${wf.activityName} (${wf.activityCode})</div>
+        <div class="dl">Unit</div><div class="dv">${wf.unit}</div>
+        <div class="dl">Reporting Date</div><div class="dv">${wf.startDate} at ${wf.startTime}</div>
+        <div class="dl">Reporting Location</div><div class="dv">${wf.location}</div>
+        <div class="dl">Attire</div><div class="dv">${wf.attire}</div>
+        <div class="dl">Call-Up Ref</div><div class="dv">${state.callupRef}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function wfDetailHtml(wf) {
+  if (!wf) return '';
+  return `
+    <div class="dl">Activity Code</div><div class="dv">${wf.activityCode}</div>
+    <div class="dl">Activity Type</div><div class="dv">${wf.activityType}</div>
+    <div class="dl">Conducting Unit</div><div class="dv">${wf.unit}</div>
+    <div class="dl">Activity Name</div><div class="dv">${wf.activityName}</div>
+    <div class="dl">Period</div><div class="dv">${wf.startDate} – ${wf.endDate}</div>
+    <div class="dl">Timing</div><div class="dv">${wf.startTime} – ${wf.endTime}</div>
+    <div class="dl">Overall CO</div><div class="dv">${wf.co}</div>
+    <div class="dl">Reporting Location</div><div class="dv">${wf.location}</div>
+    <div class="dl">Reporting Attire</div><div class="dv">${wf.attire}</div>`;
+}
+</script>
+</body>
+</html>
