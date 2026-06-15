@@ -502,6 +502,17 @@
         <div style="font-size:.78rem;color:var(--text-sub);margin-bottom:.5rem;">
           ℹ️ Check the boxes on the left to select NSmen for call-up.
         </div>
+        
+        <div style="margin-bottom:1rem;">
+          <input
+            type="text"
+            id="nric-search"
+            placeholder="Search NRIC..."
+            oninput="filterPersonnelByNric()"
+            style="max-width:300px;"
+          />
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead>
@@ -1088,6 +1099,25 @@ function initSuperPage() {
       </div>
     </div>`;
   }).join('');
+}
+
+
+function filterPersonnelByNric() {
+  const searchValue = document.getElementById('nric-search').value.trim().toUpperCase();
+
+  document.querySelectorAll('#eligible-tbody tr').forEach(row => {
+    const nricCell = row.children[2];
+
+    if (!nricCell) return;
+
+    const nric = nricCell.textContent.trim().toUpperCase();
+
+    if (searchValue === '' || nric === searchValue) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
 }
 
 // ═══════════════════════════════════════════
