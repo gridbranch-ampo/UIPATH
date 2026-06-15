@@ -462,7 +462,7 @@
     <div class="flex-between mb-2">
       <div>
         <div class="page-title">Eligible List</div>
-        <p class="page-sub">Select personnel to include in the call-up.</p>
+        <p class="page-sub">Select personnel to include in the call-up. First select a Workfile, then check individual NSmen.</p>
       </div>
     </div>
 
@@ -523,7 +523,7 @@
       </div>
 
       <div id="eligible-placeholder" style="padding:2rem;text-align:center;color:var(--text-sub);font-size:.85rem;">
-        Eligible personnel list.
+        ← Select a Workfile above to load eligible personnel.
       </div>
     </div>
 
@@ -828,6 +828,8 @@ function submitWorkfile() {
 // PAGE 2 — ELIGIBLE LIST
 // ═══════════════════════════════════════════
 function initEligiblePage() {
+  loadEligibleListDirect();
+
   state.selectedWorkfileId = null;
   state.selectedPhase = null;
   state.phaseAssigned = false;
@@ -844,6 +846,32 @@ function initEligiblePage() {
   document.getElementById('eligible-meta').textContent = '';
   setStep(1);
 }
+
+
+function loadEligibleListDirect() {
+  const tbody = document.getElementById('eligible-tbody');
+  tbody.innerHTML = ELIGIBLE_LIST.map((p,i) => `
+    <tr>
+      <td><input type="checkbox" class="elig-chk" data-nric="${p.nric}" data-idx="${i}" onchange="updateSelCount()" /></td>
+      <td>${p.rank} ${p.name}</td>
+      <td>${p.nric}</td>
+      <td>${p.persNo}</td>
+      <td>${p.pes}</td>
+      <td>${p.tos}</td>
+      <td>${p.orns}</td>
+      <td>${p.vocation}</td>
+      <td>${p.trgPos}</td>
+    </tr>`).join('');
+
+  document.getElementById('eligible-placeholder').style.display = 'none';
+  document.getElementById('eligible-loading').classList.remove('show');
+  document.getElementById('eligible-table-wrap').style.display = 'block';
+  document.getElementById('phase-bar-wrap').style.display = 'block';
+  document.getElementById('sel-count-wrap').style.display = 'block';
+  document.getElementById('eligible-meta').textContent = 'Hardcoded Eligible Personnel List';
+  updateSelCount();
+}
+
 
 function renderWorkfileTable() {
   const tbody = document.getElementById('workfile-tbody');
